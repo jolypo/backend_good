@@ -50,36 +50,39 @@ app.get("/", (req, res) => {
 });
 
 // ✅ الاتصال بقاعدة البيانات
-mongoose.connect(process.env.MONGO_URI + "&directConnection=true")
-  .then(() => {
-    console.log("✅ MongoDB connected");
-    console.log("📊 Database:", mongoose.connection.name);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log("✅ MongoDB connected");
+  console.log("📊 Database:", mongoose.connection.name);
 
-    app.listen(PORT, () => {
-      console.log("\n" + "=".repeat(60));
-      console.log("🚀 Backend Server Started Successfully!");
-      console.log("=".repeat(60));
-      console.log(`\n🌐 Server URL: ${BASE_URL}`);
-      console.log(`🎨 Frontend URL: ${FRONTEND_URL}`);
-      console.log(`🔐 JWT Secret: ${process.env.JWT_SECRET ? "✅ Configured" : "⚠️  NOT SET!"}`);
-      console.log("\n📋 Available Endpoints:");
-      console.log(`   POST ${BASE_URL}/routes/auth/login`);
-      console.log(`   GET  ${BASE_URL}/routes/storge`);
-      console.log(`   POST ${BASE_URL}/routes/newItem`);
-      console.log(`   POST ${BASE_URL}/routes/receipts/add`);
-      console.log(`   POST ${BASE_URL}/routes/delivery/add`);
-      console.log(`   GET  ${BASE_URL}/routes/dshbord`);
-      console.log(`   POST ${BASE_URL}/routes/newUser`);
-      console.log("\n💾 Static Files:");
-      console.log(`   📁 Receipts: ${BASE_URL}/receipts/<filename>.pdf`);
-      console.log(`   📁 Delivery: ${BASE_URL}/delivery/<filename>.pdf`);
-      console.log("\n" + "=".repeat(60) + "\n");
-    });
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1);
+  app.listen(PORT, () => {
+    console.log("\n" + "=".repeat(60));
+    console.log("🚀 Backend Server Started Successfully!");
+    console.log("=".repeat(60));
+    console.log(`\n🌐 Server URL: ${BASE_URL}`);
+    console.log(`🎨 Frontend URL: ${FRONTEND_URL}`);
+    console.log(`🔐 JWT Secret: ${process.env.JWT_SECRET ? "✅ Configured" : "⚠️  NOT SET!"}`);
+    console.log("\n📋 Available Endpoints:");
+    console.log(`   POST ${BASE_URL}/routes/auth/login`);
+    console.log(`   GET  ${BASE_URL}/routes/storge`);
+    console.log(`   POST ${BASE_URL}/routes/newItem`);
+    console.log(`   POST ${BASE_URL}/routes/receipts/add`);
+    console.log(`   POST ${BASE_URL}/routes/delivery/add`);
+    console.log(`   GET  ${BASE_URL}/routes/dshbord`);
+    console.log(`   POST ${BASE_URL}/routes/newUser`);
+    console.log("\n💾 Static Files:");
+    console.log(`   📁 Receipts: ${BASE_URL}/receipts/<filename>.pdf`);
+    console.log(`   📁 Delivery: ${BASE_URL}/delivery/<filename>.pdf`);
+    console.log("\n" + "=".repeat(60) + "\n");
   });
+})
+.catch((err) => {
+  console.error("❌ MongoDB connection error:", err);
+  process.exit(1);
+});
 
 // ✅ معالجة أخطاء Mongoose
 mongoose.connection.on('error', (err) => {
