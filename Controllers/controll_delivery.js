@@ -66,11 +66,11 @@ const generateDeliveryPDF = async (receipt) => {
 
       const printer = new PdfPrinter(fonts);
 
-      // ✅ جدول المواد - عكس الترتيب للـ RTL
+      // ✅ جدول المواد (نفس الاستلام)
       const itemsTable = [
         [
           { text: "الكمية", bold: true, alignment: "center", fillColor: "#eb5525", color: "white" },
-          { text: " المادة رقم ", bold: true, alignment: "center", fillColor: "#eb5525", color: "white" },
+          { text: "المادة رقم", bold: true, alignment: "center", fillColor: "#eb5525", color: "white" },
           { text: "المادة", bold: true, alignment: "center", fillColor: "#eb5525", color: "white" },
           { text: "النوع", bold: true, alignment: "center", fillColor: "#eb5525", color: "white" },
           { text: "عدد", bold: true, alignment: "center", fillColor: "#eb5525", color: "white" }
@@ -87,18 +87,15 @@ const generateDeliveryPDF = async (receipt) => {
         ]);
       });
 
-      // ✅ التواقيع
-      const cleanBase64 = (data) => {
-        if (!data) return null;
-        return data.replace(/^data:image\/\w+;base64,/, "");
-      };
+      const cleanBase64 = (data) =>
+        data ? data.replace(/^data:image\/\w+;base64,/, "") : null;
 
-      // توقيع المسلم (من Canvas)
+      // توقيع المستلم (الشخص)
       const receiverSignature = receipt.receiver.signature
         ? { image: `data:image/png;base64,${cleanBase64(receipt.receiver.signature)}`, width: 100, height: 50, alignment: "center" }
         : { text: "", alignment: "center" };
 
-      // توقيع المدير (من ملف s.png)
+      // توقيع المسلم (المدير)
       const managerSignPath = path.join(__dirname, "../s.png");
       const managerSignature = fs.existsSync(managerSignPath)
         ? { image: managerSignPath, width: 100, height: 50, alignment: "center" }
@@ -106,14 +103,10 @@ const generateDeliveryPDF = async (receipt) => {
 
       const docDefinition = {
         pageSize: "A4",
-        defaultStyle: { 
-          font: "Cairo", 
-          alignment: "right"
-        },
+        defaultStyle: { font: "Cairo", alignment: "right" },
         pageMargins: [40, 30, 40, 30],
 
         content: [
-          // ✅ الصف العلوي - عكس الأعمدة
           {
             columns: [
               { text: `تاريخ ${moment(receipt.date).format("YYYY/MM/DD")}`, alignment: "right", width: "*" },
@@ -121,15 +114,14 @@ const generateDeliveryPDF = async (receipt) => {
             ]
           },
 
-          { 
-            text: "\nسند تسليم\n", 
-            alignment: "center", 
-            bold: true, 
-            fontSize: 18, 
-            color: "#eb5525" 
+          {
+            text: "\nتسليم سند \n",
+            alignment: "center",
+            bold: true,
+            fontSize: 18,
+            color: "#eb5525"
           },
 
-          // ✅ الجدول
           {
             table: {
               headerRows: 1,
@@ -137,40 +129,41 @@ const generateDeliveryPDF = async (receipt) => {
               body: itemsTable
             },
             layout: {
-              fillColor: (rowIndex) => rowIndex === 0 ? "#eb5525" : rowIndex % 2 === 0 ? "#f9f9f9" : null,
+              fillColor: (rowIndex) =>
+                rowIndex === 0 ? "#eb5525" : rowIndex % 2 === 0 ? "#f9f9f9" : null,
               hLineColor: () => "#e0e0e0",
               vLineColor: () => "#e0e0e0"
             },
             margin: [0, 10, 0, 20]
           },
 
-          { 
-            text:" المذكورة أعلاه المواد كافة استلمت بأنني أدناه الموقع أنا أقر", 
-            alignment: "center", 
-            margin: [0, 0, 0, 40] 
+          {
+            text: " المذكورة أعلاه المواد كافة استلمت بأنني أدناه الموقع أنا أقر",
+            alignment: "center",
+            margin: [0, 0, 0, 40]
           },
 
-          // ✅ التواقيع - المسلم على اليمين، المستلم على اليسار
+          // ✅ التواقيع (مطابق للاستلام)
           {
             columns: [
-              // العمود الأيسر - المستلم (المدير)
+              // اليسار: المسلم (المدير)
               {
                 width: "50%",
                 stack: [
                   { text: "المستلم", alignment: "center", bold: true, margin: [0, 0, 0, 5] },
-                { text: "رتبة", alignment: "center", bold: true, margin: [0, 0, 0, 5] },
+                  { text: "الرتبة", alignment: "center", bold: true, margin: [0, 0, 0, 5] },
                   managerSignature,
                   { text: "خالد", alignment: "center", margin: [0, 5, 0, 0], fontSize: 12 }
                 ]
               },
-              // العمود الأيمن - المسلم (الشخص)
+              // اليمين: المستلم (الشخص)
               {
                 width: "50%",
                 stack: [
                   { text: "المسلم", alignment: "center", bold: true, margin: [0, 0, 0, 5] },
-                  { text: receipt.receiver.rank, alignment: "center", margin: [0, 5, 0, 0], fontSize: 12 },
+                  { text: receipt.receiver.rank, alignment: "center", bold: true, margin: [0, 0, 0, 5] },
                   receiverSignature,
-                  { text: receipt.receiver.name, alignment: "center", margin: [0, 5, 0, 0], fontSize: 12 },
+                  { text: receipt.receiver.name, alignment: "center", margin: [0, 5, 0, 0], fontSize: 12 }
                 ]
               }
             ],
@@ -189,13 +182,14 @@ const generateDeliveryPDF = async (receipt) => {
         console.log(`✅ Delivery PDF created: ${filename}`);
         resolve({ success: true, filepath, filename });
       });
-      stream.on("error", (err) => reject(err));
+      stream.on("error", reject);
 
     } catch (err) {
       reject(err);
     }
   });
 };
+
 // ✅ إضافة سند تسليم
 const post_add_delivery = async (req, res) => {
   const session = await mongoose.startSession();
